@@ -2,8 +2,8 @@ This is a simple project which will control a Radio Controlled vehicle via a ser
 
 ## Requirements:
 
-pyserial
-pygame
+* pyserial
+* pygame
 
 ## Usage
 
@@ -43,5 +43,5 @@ This is as it relates to the `joystick.py` control file and it maps to the Saite
   Arduino Digital 9: Aux4
   Arduino Digital 13: Status LED
 
-[!Schematic](https://github.com/mattwilliamson/Arduino-RC-Receiver/raw/master/serial_ppm_rx_bb.png)
+![Schematic](https://github.com/mattwilliamson/Arduino-RC-Receiver/raw/master/serial_ppm_rx_bb.png)
 
