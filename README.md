@@ -33,15 +33,15 @@ Currently all buttons work as toggles.
 
 This is as it relates to the `joystick.py` control file and it maps to the Saitek joystick mentioned above.
 
-  Arduino Digital 2: Throttle
-  Arduino Digital 3: Roll
-  Arduino Digital 4: Pitch
-  Arduino Digital 5: Yaw
-  Arduino Digital 6: Aux1
-  Arduino Digital 7: Aux2
-  Arduino Digital 8: Aux3
-  Arduino Digital 9: Aux4
-  Arduino Digital 13: Status LED
+* Arduino Digital 2: Throttle
+* Arduino Digital 3: Roll
+* Arduino Digital 4: Pitch
+* Arduino Digital 5: Yaw
+* Arduino Digital 6: Aux1
+* Arduino Digital 7: Aux2
+* Arduino Digital 8: Aux3
+* Arduino Digital 9: Aux4
+* Arduino Digital 13: Status LED
 
 ![Schematic](https://github.com/mattwilliamson/Arduino-RC-Receiver/raw/master/serial_ppm_rx_bb.png)
 
