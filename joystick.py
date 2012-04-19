@@ -26,8 +26,10 @@ BAUD_RATE = 38400
 # SERIAL_PORT = '/dev/tty.usbmodem411'
 #SERIAL_PORT = '/dev/tty.usbmodemfa131'
 SERIAL_PORT = '/dev/tty.usbserial-A100RWUF'
+# SERIAL_PORT = '/dev/tty.usbserial-AH00PP05'
+
 # 50hz
-FREQUENCY = 1. / 50 
+FREQUENCY = 1. / 100
 
 MIN_PPM = 0
 MAX_PPM = 250
@@ -47,7 +49,7 @@ class ControllerState(object):
     roll     = MIN_PPM
     pitch    = MIN_PPM
     yaw      = MIN_PPM
-    aux1     = MIN_PPM
+    aux1     = MAX_PPM
     aux2     = MIN_PPM
     aux3     = MIN_PPM
     aux4     = MIN_PPM
@@ -75,7 +77,7 @@ class ControllerState(object):
             if axis == AXIS_ROLL:
                 self.roll = value
             elif axis == AXIS_PITCH:
-                self.pitch = value
+                self.pitch = MAX_PPM - value
             elif axis == AXIS_THROTTLE:
                 self.throttle = MAX_PPM - value
             elif axis == AXIS_YAW:

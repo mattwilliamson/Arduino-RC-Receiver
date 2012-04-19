@@ -10,6 +10,7 @@ byte buffer[SERVOS];
 int bytesReceived;
 byte currentByte;
 int lastReceived;
+boolean armed = false;
  
 void setup() 
 { 
@@ -47,6 +48,7 @@ void loop()
     
     if(bytesReceived == SERVOS) {
       bytesReceived = 0;
+      armed = true;
       
       // Send Servo Commands
       for(int i=0; i<SERVOS; i++) {
@@ -54,5 +56,10 @@ void loop()
         servos[i].write(servoPos);
       }
     }
+  } else if(!armed) {
+    digitalWrite(PIN_LED, HIGH);
+    delay(500);
+    digitalWrite(PIN_LED, LOW);
+    delay(500);
   }
 } 
