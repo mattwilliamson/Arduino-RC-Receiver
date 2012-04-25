@@ -45,5 +45,4 @@ This is as it relates to the `joystick.py` control file and it maps to the Saite
 
 ![Schematic](https://github.com/mattwilliamson/Arduino-RC-Receiver/raw/master/serial_ppm_rx_bb.png)
 
-
-![Home Made Receiver Board](https://github.com/mattwilliamson/Arduino-RC-Receiver/raw/master/receiver_board.png)
+![Breadboard](http://dl.dropbox.com/u/14573179/Github/Images/serial_ppm/serial_ppm.jpg)
