@@ -1,52 +1,64 @@
-#include <Servo.h> 
+#include <TimerOne.h> 
 
-#define SERVOS 8
+#define CHANNELS 8
+
+#define MIN_PULSE_TIME 100   // 1000us
+#define MAX_PULSE_TIME 200   // 2000us
+#define SYNC_PULSE_TIME 1000  // 3000us
+
+#define SERIAL_BAUD 38400
+
 #define PIN_LED 13
-#define LED_TIME 1000
-#define MIN_SERVO_POS 40
-#define MAX_SERVO_POS 150
-#define AUTO_DESCENT_ENABLED
-#define AUTO_DESCENT_TIMEOUT 1500
-#define AUTO_DESCENT_RATE 1 // Per 100ms
+#define PIN_PPM 3
 
-Servo servos[SERVOS];
-int positions[SERVOS];
-byte buffer[SERVOS];
+#define RECEIVER_TIMEOUT 1500 // 1.5s
+#define MIN_RECEIVER_VALUE 0
+#define MAX_RECEIVER_VALUE 250
+
+// For Aeroquad, this should disarm the quad when reception is lost
+static unsigned int defaultPulseWidths[CHANNELS] = {
+  MIN_PULSE_TIME,     // Throttle
+  1500,               // Rolle
+  1500,               // Pitch
+  MIN_PULSE_TIME,     // YAW
+  MAX_PULSE_TIME,     // AUX1 (MODE in Aeroquad)
+  MIN_PULSE_TIME,     // AUX2
+  MIN_PULSE_TIME,     // AUX3
+  MIN_PULSE_TIME      // AUX4
+};
+
+unsigned int pulseWidths[CHANNELS];
+byte buffer[CHANNELS];
 int bytesReceived;
 byte currentByte;
-unsigned long lastReceived;
-unsigned long lastLed;
+unsigned long lastReceived = 0;
 boolean armed = false;
 
-void setup() 
-{ 
-  pinMode(PIN_LED, OUTPUT); 
+void setDefaultPulseWidths() {
+  for (int i=0; i<CHANNELS; i++) {
+    pulseWidths[i] = defaultPulseWidths[i];
+  }
+}
+
+void setup() {
+  pinMode(PIN_LED, OUTPUT);
+  pinMode(PIN_PPM, OUTPUT);
+
   Serial.begin(38400);
-  bytesReceived = 0;
-  lastReceived = 0;
-  lastLed = 0;
+  
+  setDefaultPulseWidths();
+  
+  // Start timer with sync pulse
+  Timer1.initialize(SYNC_PULSE_TIME);
+  Timer1.attachInterrupt(isr_sendPulses);
+  isr_sendPulses();
+}
 
-  for(int i=0; i<SERVOS; i++) {
-    positions[i] = MIN_SERVO_POS;
-    servos[i].attach(2 + i);
-    servos[i].write(MIN_SERVO_POS);
-  }
-} 
-
-
-void loop() 
-{
-  if(lastLed && abs(millis() - lastReceived) > LED_TIME) {
-    digitalWrite(PIN_LED, LOW);
-    lastLed = 0;
-  }
-
-  if (Serial.available() > 0) {
-    digitalWrite(PIN_LED, HIGH);
+void loop() {
+  // Handle Serial Data
+  if (Serial.available()) {
     lastReceived = millis();
-    lastLed = lastReceived;
     currentByte = Serial.read();
-    armed = true;
 
     if (currentByte == 254) {
       // Either packet is done, or we got corrupt data. Reset the packet
@@ -56,62 +68,62 @@ void loop()
     buffer[bytesReceived] = currentByte;
     bytesReceived++;
 
-    if(bytesReceived == SERVOS) {
+    if (bytesReceived == CHANNELS) {
       bytesReceived = 0;
+      armed = true;
 
-      // Send Servo Commands
-      for(int i=0; i<SERVOS; i++) {
-        int servoPos = map(buffer[i], 0, 250, MIN_SERVO_POS, MAX_SERVO_POS);
-        servos[i].write(servoPos);
-        positions[i] = servoPos;
+      // Convert char (0-250) to pulse width (1000-2000)
+      for (int i=0; i<CHANNELS; i++) {
+        pulseWidths[i] = map(buffer[i], MIN_RECEIVER_VALUE, MAX_RECEIVER_VALUE, 
+                                        MIN_PULSE_TIME, MAX_PULSE_TIME);
       }
     }
   }
 
   if(!armed) {
-    // Autodescent
-#ifdef AUTO_DESCENT_ENABLED
-    servos[2].write((MAX_SERVO_POS + MIN_SERVO_POS) / 2);
-    positions[2] = (MAX_SERVO_POS + MIN_SERVO_POS) / 2;
-    servos[3].write((MAX_SERVO_POS + MIN_SERVO_POS) / 2);
-    positions[3] = (MAX_SERVO_POS + MIN_SERVO_POS) / 2;
-    servos[4].write((MAX_SERVO_POS + MIN_SERVO_POS) / 2);
-    positions[4] = (MAX_SERVO_POS + MIN_SERVO_POS) / 2;
-
-    // Aux1
-    servos[5].write(MAX_SERVO_POS);
-    positions[5] = MAX_SERVO_POS;
-#endif
+    // Not Armed yet (no packets received) or lost reception, blink the LED
+    // and set the dault positions
+    setDefaultPulseWidths();
     
-
-    // Throttle
-    int stepInterval = 100;
-
-    while (positions[1] > MIN_SERVO_POS) {
-      delay(stepInterval / 2);
-      digitalWrite(PIN_LED, HIGH);
-
-      positions[1] -= AUTO_DESCENT_RATE;
-      positions[1] = positions[1] > MIN_SERVO_POS ? positions[1] : MIN_SERVO_POS;
-      servos[1].write(positions[1]);
-
-      delay(stepInterval / 2);
-      digitalWrite(PIN_LED, LOW);
-    }
-
-    // Not Armed yet (no packets received), blink the LED
     digitalWrite(PIN_LED, HIGH);
-    delay(500);
+    delay(300);
+    
     digitalWrite(PIN_LED, LOW);
-    delay(500);
+    delay(300);
+  } else {
+    digitalWrite(PIN_LED, HIGH);
   }
-
-#ifdef AUTO_DESCENT_ENABLED
-  unsigned long now = millis();
-
-  if(lastReceived > 0 && lastReceived < now && (now - lastReceived) > AUTO_DESCENT_TIMEOUT) {
+  
+  // Check if we lost reception
+  if(armed && lastReceived > 0 &&  millis() - lastReceived > RECEIVER_TIMEOUT) {
     armed = false;
+    
+    for(int i=0; i<5; i++) {
+      digitalWrite(PIN_LED, HIGH);
+      delay(100);
+      digitalWrite(PIN_LED, LOW);
+      delay(100);
+    }
   }
-#endif
 } 
+
+// Sync pulse first
+volatile int currentChannel = CHANNELS - 1;
+
+void isr_sendPulses() {
+  digitalWrite(PIN_PPM, LOW);
+  currentChannel++;
+  
+  if (currentChannel == CHANNELS) {
+    // After last channel
+    Timer1.setPeriod(SYNC_PULSE_TIME);
+    currentChannel = -1; // Will be 0 on next interrupt
+  } else {
+    Timer1.setPeriod(pulseWidths[currentChannel]);
+  }
+  
+  digitalWrite(PIN_PPM, HIGH);
+  
+  Timer1.restart(); // Not sure if this is needed, but set clock to 0
+}
 

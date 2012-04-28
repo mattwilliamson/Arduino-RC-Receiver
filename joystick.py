@@ -29,7 +29,7 @@ SERIAL_PORT = '/dev/tty.usbserial-A100RWUF'
 # SERIAL_PORT = '/dev/tty.usbserial-AH00PP05'
 
 # 50hz
-FREQUENCY = 1. / 100
+FREQUENCY = 1. / 10
 
 MIN_PPM = 0
 MAX_PPM = 250
