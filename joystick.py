@@ -29,7 +29,7 @@ SERIAL_PORT = '/dev/tty.usbserial-A100RWUF'
 # SERIAL_PORT = '/dev/tty.usbserial-AH00PP05'
 
 # 50hz
-FREQUENCY = 1. / 10
+FREQUENCY = 1. / 100
 
 MIN_PPM = 0
 MAX_PPM = 250
@@ -63,6 +63,11 @@ class ControllerState(object):
         #return 'Q' + chr(self.throttle) + chr(self.roll) + chr(self.pitch) + chr(self.yaw) + chr(self.aux1)
         return chr(self.throttle) + chr(self.roll) + chr(self.pitch) + chr(self.yaw) + chr(self.aux1) + \
             chr(self.aux2) + chr(self.aux3) + chr(self.aux4) + chr(254)
+
+        # YAXIS,ZAXIS,THROTTLE,XAXIS,AUX1,AUX2,0,0
+        # return chr(self.roll) + chr(self.yaw) + chr(self.throttle) + chr(self.pitch) + chr(self.aux1) + \
+            # chr(self.aux2) + chr(self.aux3) + chr(self.aux4) + chr(254)
+
 
     # Joystick Movement
     def handleJoyEvent(self, e):

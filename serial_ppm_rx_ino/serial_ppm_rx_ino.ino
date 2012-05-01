@@ -2,30 +2,37 @@
 
 #define CHANNELS 8
 
-#define MIN_PULSE_TIME 100   // 1000us
-#define MAX_PULSE_TIME 200   // 2000us
-#define SYNC_PULSE_TIME 1000  // 3000us
+// Set these a little high since they are registering low on AQ
+#define MIN_PULSE_TIME 1030   // 1000us
+#define MAX_PULSE_TIME 1990   // 2000us
+#define HALF_PULSE_TIME (MIN_PULSE_TIME + MAX_PULSE_TIME) / 2
+#define SYNC_PULSE_TIME 3050  // 3000us
 
 #define SERIAL_BAUD 38400
 
 #define PIN_LED 13
-#define PIN_PPM 3
+#define PIN_PPM 9
 
 #define RECEIVER_TIMEOUT 1500 // 1.5s
 #define MIN_RECEIVER_VALUE 0
 #define MAX_RECEIVER_VALUE 250
 
 // For Aeroquad, this should disarm the quad when reception is lost
+// TODO: Need to match AQ's channels
+// YAXIS,ZAXIS,THROTTLE,XAXIS,AUX1,AUX2,0,0
 static unsigned int defaultPulseWidths[CHANNELS] = {
-  MIN_PULSE_TIME,     // Throttle
-  1500,               // Rolle
-  1500,               // Pitch
-  MIN_PULSE_TIME,     // YAW
+  MIN_PULSE_TIME,      // Throttle
+  HALF_PULSE_TIME,     // Roll
+  HALF_PULSE_TIME,     // Pitch
+  MIN_PULSE_TIME,      // Yaw
+  
   MAX_PULSE_TIME,     // AUX1 (MODE in Aeroquad)
-  MIN_PULSE_TIME,     // AUX2
-  MIN_PULSE_TIME,     // AUX3
-  MIN_PULSE_TIME      // AUX4
+  MAX_PULSE_TIME,     // AUX2 (ALTITUDE in Aeroquad)
+  MAX_PULSE_TIME,     // AUX3
+  MAX_PULSE_TIME      // AUX4
 };
+
+
 
 unsigned int pulseWidths[CHANNELS];
 byte buffer[CHANNELS];
@@ -63,10 +70,10 @@ void loop() {
     if (currentByte == 254) {
       // Either packet is done, or we got corrupt data. Reset the packet
       bytesReceived = 0;
+    } else {
+      buffer[bytesReceived] = currentByte;
+      bytesReceived++;
     }
-
-    buffer[bytesReceived] = currentByte;
-    bytesReceived++;
 
     if (bytesReceived == CHANNELS) {
       bytesReceived = 0;
@@ -112,6 +119,7 @@ volatile int currentChannel = CHANNELS - 1;
 
 void isr_sendPulses() {
   digitalWrite(PIN_PPM, LOW);
+  
   currentChannel++;
   
   if (currentChannel == CHANNELS) {
@@ -123,7 +131,5 @@ void isr_sendPulses() {
   }
   
   digitalWrite(PIN_PPM, HIGH);
-  
-  Timer1.restart(); // Not sure if this is needed, but set clock to 0
 }
 
