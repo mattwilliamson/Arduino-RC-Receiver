@@ -5,6 +5,10 @@ This is a simple project which will control a Radio Controlled vehicle via a ser
 * pyserial
 * pygame
 
+# TODO
+
+**This project has been changed to send SUM PPM over Digital Pin 9 from the arduino to the aeroquad Digital 2 pin instead of one pin for each channel.** All of the diagrams below info pertains to the sketch names `serial_servo_rx`.
+
 ## Usage
 
 * Upload the `serial_ppm_rx` sketch to your Arduino.
