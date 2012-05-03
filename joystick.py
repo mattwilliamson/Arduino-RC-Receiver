@@ -28,6 +28,9 @@ BAUD_RATE = 38400
 SERIAL_PORT = '/dev/tty.usbserial-A100RWUF'
 # SERIAL_PORT = '/dev/tty.usbserial-AH00PP05'
 
+# WiFly
+# SERIAL_PORT = 'socket://169.254.1.1:2000'
+
 # 50hz
 FREQUENCY = 1. / 100
 
@@ -124,7 +127,7 @@ class ControllerState(object):
 
 # Main method
 def main():
-    with serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=0) as xbee:
+    with serial.serial_for_url(SERIAL_PORT, BAUD_RATE, timeout=0) as xbee:
         controller_state = ControllerState()
         watchdog_timer = 0
         joysticks = []
