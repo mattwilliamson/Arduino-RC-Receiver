@@ -39,10 +39,10 @@ AXIS_PITCH = 1
 AXIS_THROTTLE = 3
 AXIS_YAW = 2
 
-BUTTON_AUX1 = 0 # Trigger
-BUTTON_AUX2 = 1 # Button 2
-BUTTON_AUX3 = 2 # Button 3
-BUTTON_AUX4 = 3 # Button 4
+BUTTON_AUX1 = 1 # Button 2
+BUTTON_AUX2 = 2 # Button 2
+BUTTON_AUX3 = 3 # Button 3
+BUTTON_AUX4 = 0 # Trigger
 
 class ControllerState(object):
     throttle = MIN_PPM
@@ -55,14 +55,15 @@ class ControllerState(object):
     aux4     = MIN_PPM
 
     def __str__(self):
-        return 'Throttle:{0.throttle} Roll:{0.roll} Pitch:{0.pitch} Yaw:{0.yaw} A1:{0.aux1}'.format(self)
+        return 'Throttle:{0.throttle} Roll:{0.roll} Pitch:{0.pitch} Yaw:{0.yaw} A1:{0.aux1} A2:{0.aux2} A3:{0.aux3} A4:{0.aux4}'.format(self)
 
     def serial_format(self):
         #return 'Q' + chr(self.throttle) + chr(self.roll) + chr(self.pitch) + chr(self.yaw) + chr(self.aux1) + \
         #    chr(self.aux2) + chr(self.aux3) + chr(self.aux4)
         #return 'Q' + chr(self.throttle) + chr(self.roll) + chr(self.pitch) + chr(self.yaw) + chr(self.aux1)
-        return chr(self.throttle) + chr(self.roll) + chr(self.pitch) + chr(self.yaw) + chr(self.aux1) + \
-            chr(self.aux2) + chr(self.aux3) + chr(self.aux4) + chr(254)
+        return chr(self.throttle) + chr(self.roll) + chr(self.pitch) + chr(self.yaw) + \
+            chr(self.aux1) + chr(self.aux2) + chr(self.aux3) + chr(self.aux4) + \
+            chr(254) # sync byte
 
         # YAXIS,ZAXIS,THROTTLE,XAXIS,AUX1,AUX2,0,0
         # return chr(self.roll) + chr(self.yaw) + chr(self.throttle) + chr(self.pitch) + chr(self.aux1) + \

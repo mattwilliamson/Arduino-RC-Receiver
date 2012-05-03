@@ -20,7 +20,7 @@
 // For Aeroquad, this should disarm the quad when reception is lost
 // TODO: Need to match AQ's channels
 // YAXIS,ZAXIS,THROTTLE,XAXIS,AUX1,AUX2,0,0
-static unsigned int defaultPulseWidths[CHANNELS] = {
+const unsigned int defaultPulseWidths[CHANNELS] = {
   MIN_PULSE_TIME,      // Throttle
   HALF_PULSE_TIME,     // Roll
   HALF_PULSE_TIME,     // Pitch
@@ -33,6 +33,10 @@ static unsigned int defaultPulseWidths[CHANNELS] = {
 };
 
 
+// Inbound data is: [throttle, roll, pitch, yaw, aux1, aux2, aux3, aux4]
+// AeroQuad expects: [XAXIS,YAXIS,THROTTLE,ZAXIS,MODE,AUX1,AUX2,AUX3]
+// Make sure you define SERIAL_SUM_PPM_2 in AeroQuad!
+const int channelMap[CHANNELS] = {1, 2, 0, 3, 4, 5, 6, 7};
 
 unsigned int pulseWidths[CHANNELS];
 byte buffer[CHANNELS];
@@ -62,6 +66,12 @@ void setup() {
 }
 
 void loop() {
+  handleSerial();
+  checkArmed();
+  checkLostReception();
+} 
+
+void handleSerial() {
   // Handle Serial Data
   if (Serial.available()) {
     lastReceived = millis();
@@ -86,7 +96,9 @@ void loop() {
       }
     }
   }
+}
 
+void checkArmed() {
   if(!armed) {
     // Not Armed yet (no packets received) or lost reception, blink the LED
     // and set the dault positions
@@ -100,7 +112,9 @@ void loop() {
   } else {
     digitalWrite(PIN_LED, HIGH);
   }
-  
+}
+
+void checkLostReception() {
   // Check if we lost reception
   if(armed && lastReceived > 0 &&  millis() - lastReceived > RECEIVER_TIMEOUT) {
     armed = false;
@@ -112,22 +126,21 @@ void loop() {
       delay(100);
     }
   }
-} 
+}
 
 // Sync pulse first
-volatile int currentChannel = CHANNELS - 1;
+volatile int currentChannel = 0;
 
 void isr_sendPulses() {
   digitalWrite(PIN_PPM, LOW);
   
-  currentChannel++;
-  
   if (currentChannel == CHANNELS) {
     // After last channel
     Timer1.setPeriod(SYNC_PULSE_TIME);
-    currentChannel = -1; // Will be 0 on next interrupt
+    currentChannel = 0; // Will be 0 on next interrupt
   } else {
-    Timer1.setPeriod(pulseWidths[currentChannel]);
+    Timer1.setPeriod(pulseWidths[channelMap[currentChannel]]);
+    currentChannel++;
   }
   
   digitalWrite(PIN_PPM, HIGH);
